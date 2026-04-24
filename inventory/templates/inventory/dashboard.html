@@ -1,0 +1,61 @@
+{% extends 'inventory/base.html' %}
+{% block content %}
+
+<h1 class="page-title">Dashboard</h1>
+
+<!-- STAT CARDS -->
+<div class="stat-grid">
+  <div class="stat-card card-blue">
+    <div class="label">Total Products</div>
+    <div class="value">{{ total_products }}</div>
+  </div>
+  <div class="stat-card card-green">
+    <div class="label">Total Stock</div>
+    <div class="value">{{ total_stock }}</div>
+  </div>
+  <div class="stat-card card-yellow">
+    <div class="label">Orders Today</div>
+    <div class="value">{{ orders_today }}</div>
+  </div>
+  <div class="stat-card card-purple">
+    <div class="label">Revenue</div>
+    <div class="value">${{ revenue }}</div>
+  </div>
+</div>
+
+<!-- INFO CARDS -->
+<div class="info-grid">
+  <!-- Out of Stock -->
+  <div class="info-card">
+    <h3>Out of Stock Products</h3>
+    {% for p in out_of_stock %}
+      <p><strong>{{ p.name }}</strong> <span>({{ p.category.name }})</span></p>
+    {% empty %}
+      <p>All products are in stock ✅</p>
+    {% endfor %}
+  </div>
+
+  <!-- Highest Sale -->
+  <div class="info-card">
+    <h3>Highest Sale Product</h3>
+    {% if highest_sale %}
+      <p><strong>Name:</strong> {{ highest_sale.product__name }}</p>
+      <p><strong>Category:</strong> {{ highest_sale.product__category__name }}</p>
+      <p><strong>Total Units Sold:</strong> {{ highest_sale.total_sold }}</p>
+    {% else %}
+      <p>No orders yet.</p>
+    {% endif %}
+  </div>
+
+  <!-- Low Stock -->
+  <div class="info-card">
+    <h3>Low Stock Products</h3>
+    {% for p in low_stock %}
+      <p><strong>{{ p.name }}</strong> - {{ p.stock }} left <span>({{ p.category.name }})</span></p>
+    {% empty %}
+      <p>No low stock alerts.</p>
+    {% endfor %}
+  </div>
+</div>
+
+{% endblock %}

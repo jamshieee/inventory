@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Inventory MS</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; display: flex; min-height: 100vh; }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      width: 240px; min-height: 100vh;
+      background: #1a1f2e;
+      display: flex; flex-direction: column;
+      position: fixed; top: 0; left: 0; z-index: 100;
+    }
+    .sidebar-brand {
+      padding: 24px 20px 20px;
+      color: #fff; font-size: 1.3rem; font-weight: 700;
+      border-bottom: 1px solid #2d3448;
+    }
+    .sidebar-brand span { color: #6c63ff; }
+    .sidebar nav { flex: 1; padding: 16px 0; }
+    .nav-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 13px 24px;
+      color: #9ca3af; text-decoration: none;
+      font-size: 0.95rem; transition: all 0.2s;
+      border-left: 3px solid transparent;
+    }
+    .nav-item:hover { color: #fff; background: #2d3448; }
+    .nav-item.active {
+      color: #fff; background: #2d3448;
+      border-left-color: #6c63ff;
+    }
+    .nav-item i { width: 20px; text-align: center; font-size: 1rem; }
+
+    /* ── MAIN CONTENT ── */
+    .main { margin-left: 240px; flex: 1; padding: 32px; min-height: 100vh; }
+    .page-title { font-size: 2rem; font-weight: 700; color: #1a1f2e; margin-bottom: 28px; }
+
+    /* ── MESSAGES ── */
+    .messages { margin-bottom: 16px; }
+    .alert {
+      padding: 12px 18px; border-radius: 8px; margin-bottom: 8px;
+      background: #d1fae5; color: #065f46; font-size: 0.9rem;
+    }
+
+    /* ── STAT CARDS ── */
+    .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 28px; }
+    .stat-card {
+      border-radius: 12px; padding: 24px 20px;
+      color: #fff; text-align: center;
+    }
+    .stat-card .label { font-size: 1rem; font-weight: 600; margin-bottom: 10px; }
+    .stat-card .value { font-size: 2rem; font-weight: 700; }
+    .card-blue { background: #3b82f6; }
+    .card-green { background: #22c55e; }
+    .card-yellow { background: #f59e0b; }
+    .card-purple { background: #8b5cf6; }
+
+    /* ── INFO CARDS ── */
+    .info-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    .info-card {
+      background: #fff; border-radius: 12px; padding: 24px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    .info-card h3 { font-size: 1rem; font-weight: 700; color: #1a1f2e; margin-bottom: 14px; }
+    .info-card p { color: #6b7280; font-size: 0.9rem; margin-bottom: 6px; }
+    .info-card p span { color: #9ca3af; }
+    .info-card strong { color: #374151; }
+
+    /* ── TABLE SECTION ── */
+    .table-card {
+      background: #fff; border-radius: 12px; padding: 24px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08); margin-bottom: 28px;
+    }
+    .table-card-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 18px;
+    }
+    .table-card-header h3 { font-size: 1.1rem; font-weight: 700; color: #1a1f2e; }
+    table { width: 100%; border-collapse: collapse; }
+    th {
+      background: #f9fafb; text-align: left;
+      padding: 12px 14px; font-size: 0.82rem;
+      text-transform: uppercase; color: #6b7280;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    td {
+      padding: 13px 14px; font-size: 0.9rem;
+      color: #374151; border-bottom: 1px solid #f3f4f6;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #f9fafb; }
+
+    /* ── BADGES ── */
+    .badge {
+      display: inline-block; padding: 3px 10px;
+      border-radius: 99px; font-size: 0.78rem; font-weight: 600;
+    }
+    .badge-green { background: #d1fae5; color: #065f46; }
+    .badge-red { background: #fee2e2; color: #991b1b; }
+    .badge-yellow { background: #fef3c7; color: #92400e; }
+    .badge-gray { background: #f3f4f6; color: #374151; }
+
+    /* ── BUTTONS ── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 9px 18px; border-radius: 8px; font-size: 0.9rem;
+      font-weight: 600; cursor: pointer; border: none; text-decoration: none;
+      transition: opacity 0.2s;
+    }
+    .btn:hover { opacity: 0.85; }
+    .btn-primary { background: #6c63ff; color: #fff; }
+    .btn-danger { background: #ef4444; color: #fff; padding: 6px 12px; font-size: 0.8rem; }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.5); z-index: 999;
+      justify-content: center; align-items: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: #fff; border-radius: 14px; padding: 32px;
+      width: 480px; max-width: 95vw;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    }
+    .modal h3 { font-size: 1.2rem; font-weight: 700; margin-bottom: 22px; color: #1a1f2e; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 0.85rem; font-weight: 600; color: #374151; margin-bottom: 6px; }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%; padding: 10px 14px; border: 1px solid #d1d5db;
+      border-radius: 8px; font-size: 0.9rem; color: #374151;
+      outline: none; transition: border 0.2s;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus { border-color: #6c63ff; }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+    .btn-cancel { background: #f3f4f6; color: #374151; }
+  </style>
+</head>
+<body>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-brand"><span>Inventory</span> MS</div>
+    <nav>
+      <a href="{% url 'dashboard' %}" class="nav-item {% if active == 'dashboard' %}active{% endif %}">
+        <i class="fas fa-home"></i> Dashboard
+      </a>
+      <a href="{% url 'products' %}" class="nav-item {% if active == 'products' %}active{% endif %}">
+        <i class="fas fa-box"></i> Products
+      </a>
+      <a href="{% url 'categories' %}" class="nav-item {% if active == 'categories' %}active{% endif %}">
+        <i class="fas fa-th-large"></i> Categories
+      </a>
+      <a href="{% url 'orders' %}" class="nav-item {% if active == 'orders' %}active{% endif %}">
+        <i class="fas fa-shopping-cart"></i> Orders
+      </a>
+      <a href="{% url 'suppliers' %}" class="nav-item {% if active == 'suppliers' %}active{% endif %}">
+        <i class="fas fa-truck"></i> Suppliers
+      </a>
+    </nav>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    {% if messages %}
+      <div class="messages">
+        {% for message in messages %}
+          <div class="alert">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,100 @@
+{% extends 'inventory/base.html' %}
+{% block content %}
+
+<h1 class="page-title">Orders</h1>
+
+<div class="table-card">
+  <div class="table-card-header">
+    <h3>All Orders</h3>
+    <button class="btn btn-primary" onclick="openModal('addOrderModal')">
+      <i class="fas fa-plus"></i> New Order
+    </button>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Product</th>
+        <th>Quantity</th>
+        <th>Total Price</th>
+        <th>Status</th>
+        <th>Date</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for o in orders %}
+      <tr>
+        <td>{{ o.id }}</td>
+        <td><strong>{{ o.product.name }}</strong></td>
+        <td>{{ o.quantity }}</td>
+        <td>${{ o.total_price }}</td>
+        <td>
+          {% if o.status == 'completed' %}
+            <span class="badge badge-green">Completed</span>
+          {% elif o.status == 'cancelled' %}
+            <span class="badge badge-red">Cancelled</span>
+          {% else %}
+            <span class="badge badge-yellow">Pending</span>
+          {% endif %}
+        </td>
+        <td>{{ o.order_date|date:"d M Y" }}</td>
+        <td>
+          <a href="{% url 'delete_order' o.pk %}" class="btn btn-danger"
+             onclick="return confirm('Delete this order?')">
+            <i class="fas fa-trash"></i>
+          </a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="7" style="text-align:center;color:#9ca3af;">No orders found.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="addOrderModal">
+  <div class="modal">
+    <h3>Place New Order</h3>
+    <form method="POST">
+      {% csrf_token %}
+      <div class="form-group">
+        <label>Product</label>
+        <select name="product" required>
+          <option value="">-- Select Product --</option>
+          {% for p in products %}
+            <option value="{{ p.pk }}">{{ p.name }} (${{ p.price }})</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Quantity</label>
+        <input type="number" name="quantity" required min="1" placeholder="1"/>
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select name="status">
+          <option value="pending">Pending</option>
+          <option value="completed">Completed</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-cancel" onclick="closeModal('addOrderModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Place Order</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<script>
+  function openModal(id) { document.getElementById(id).classList.add('open'); }
+  function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+  document.querySelectorAll('.modal-overlay').forEach(m => {
+    m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+  });
+</script>
+{% endblock %}
