@@ -1,5 +1,5 @@
 from django.db import models
-
+from decimal import Decimal
 
 class Category(models.Model):
     name = models.CharField(max_length=100)
@@ -58,7 +58,28 @@ class Order(models.Model):
     order_date = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):
-        self.total_price = self.product.price * self.quantity
+        self.total_price = self.product.price * Decimal(self.quantity)
+
+        # ✅ Stock update logic
+        if self.pk:  # Order already exists (update)
+            old_order = Order.objects.get(pk=self.pk)
+
+            if old_order.status != 'completed' and self.status == 'completed':
+                # Status changed TO completed → reduce stock
+                self.product.stock -= self.quantity
+                self.product.save()
+
+            elif old_order.status == 'completed' and self.status == 'cancelled':
+                # Status changed FROM completed TO cancelled → restore stock
+                self.product.stock += self.quantity
+                self.product.save()
+
+        else:  # New order
+            if self.status == 'completed':
+                # New order directly completed → reduce stock
+                self.product.stock -= self.quantity
+                self.product.save()
+
         super().save(*args, **kwargs)
 
     def __str__(self):

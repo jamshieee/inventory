@@ -3,6 +3,22 @@
 
 <h1 class="page-title">Products</h1>
 
+{% if messages %}
+  {% for message in messages %}
+    <div class="alert alert-{{ message.tags }}" style="
+      padding: 12px 16px;
+      margin-bottom: 10px;
+      border-radius: 8px;
+      font-weight: 500;
+      background-color: {% if message.tags == 'error' %}#fee2e2{% elif message.tags == 'warning' %}#fef9c3{% else %}#dcfce7{% endif %};
+      color: {% if message.tags == 'error' %}#991b1b{% elif message.tags == 'warning' %}#854d0e{% else %}#166534{% endif %};
+      border-left: 4px solid {% if message.tags == 'error' %}#ef4444{% elif message.tags == 'warning' %}#eab308{% else %}#22c55e{% endif %};
+    ">
+      {{ message }}
+    </div>
+  {% endfor %}
+{% endif %}
+
 <div class="table-card">
   <div class="table-card-header">
     <h3>All Products</h3>
@@ -42,14 +58,16 @@
           {% endif %}
         </td>
         <td>
-          <a href="{% url 'delete_product' p.pk %}" class="btn btn-danger"
-             onclick="return confirm('Delete this product?')">
-            <i class="fas fa-trash"></i>
+          <a href="{% url 'edit_product' p.pk %}" class="btn btn-warning btn-sm">✏️ Edit</a>
+          <a href="{% url 'delete_product' p.pk %}" class="btn btn-danger btn-sm">
+            <i class="fas fa-trash"></i> Delete
           </a>
         </td>
       </tr>
       {% empty %}
-      <tr><td colspan="8" style="text-align:center;color:#9ca3af;">No products found.</td></tr>
+      <tr>
+        <td colspan="8" style="text-align:center;color:#9ca3af;">No products found.</td>
+      </tr>
       {% endfor %}
     </tbody>
   </table>
@@ -103,14 +121,133 @@
   </div>
 </div>
 
+<!-- EDIT PRODUCT MODAL -->
+<div class="modal-overlay" id="editProductModal">
+  <div class="modal">
+    <h3>✏️ Edit Product</h3>
+    <form method="POST" id="editProductForm">
+      {% csrf_token %}
+      <div class="form-group">
+        <label>Product Name</label>
+        <input type="text" name="name" id="edit_name" required/>
+      </div>
+      <div class="form-group">
+        <label>Category</label>
+        <select name="category" id="edit_category" required>
+          <option value="">-- Select Category --</option>
+          {% for c in categories %}
+            <option value="{{ c.pk }}">{{ c.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Supplier (optional)</label>
+        <select name="supplier" id="edit_supplier">
+          <option value="">-- Select Supplier --</option>
+          {% for s in suppliers %}
+            <option value="{{ s.pk }}">{{ s.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Price ($)</label>
+        <input type="number" name="price" id="edit_price" step="0.01" required/>
+      </div>
+      <div class="form-group">
+        <label>
+          Stock Quantity
+          <span id="edit_stock_badge" style="
+            background:#0ea5e9;
+            color:white;
+            padding:2px 10px;
+            border-radius:20px;
+            font-size:12px;
+            margin-left:8px;
+          "></span>
+        </label>
+        <input type="number" name="stock" id="edit_stock" required/>
+        <small style="color:#6b7280;">
+          💡 Increase to replenish stock when new stock arrives.
+        </small>
+      </div>
+      <div class="form-group">
+        <label>Low Stock Threshold</label>
+        <input type="number" name="low_stock_threshold" id="edit_threshold"/>
+        <small style="color:#6b7280;">
+          ⚠️ Alert shows when stock falls below this number.
+        </small>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-cancel" onclick="closeModal('editProductModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">💾 Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 {% endblock %}
 
 {% block scripts %}
 <script>
-  function openModal(id) { document.getElementById(id).classList.add('open'); }
-  function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+  function openModal(id) {
+    document.getElementById(id).classList.add('open');
+  }
+
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('open');
+  }
+
+  // Close modal when clicking outside
   document.querySelectorAll('.modal-overlay').forEach(m => {
-    m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+    m.addEventListener('click', e => {
+      if (e.target === m) m.classList.remove('open');
+    });
+  });
+
+  // ✅ Open Edit Modal and fill data
+  function openEditModal(pk, name, categoryId, supplierId, price, stock, threshold) {
+    // Set form action to correct edit URL
+    document.getElementById('editProductForm').action = `/products/edit/${pk}/`;
+
+    // Fill in the fields
+    document.getElementById('edit_name').value = name;
+    document.getElementById('edit_price').value = price;
+    document.getElementById('edit_stock').value = stock;
+    document.getElementById('edit_threshold').value = threshold;
+    document.getElementById('edit_stock_badge').textContent = `Current: ${stock} units`;
+
+    // Set category dropdown
+    const catSelect = document.getElementById('edit_category');
+    for (let opt of catSelect.options) {
+      opt.selected = opt.value == categoryId;
+    }
+
+    // Set supplier dropdown
+    const supSelect = document.getElementById('edit_supplier');
+    for (let opt of supSelect.options) {
+      opt.selected = opt.value == supplierId;
+    }
+
+    openModal('editProductModal');
+  }
+</script>
+
+<!-- ✅ Pass product data to JS for edit modal -->
+<script>
+  // Replace edit button click to open modal instead of redirect
+  document.querySelectorAll('.edit-btn').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      openEditModal(
+        this.dataset.pk,
+        this.dataset.name,
+        this.dataset.category,
+        this.dataset.supplier,
+        this.dataset.price,
+        this.dataset.stock,
+        this.dataset.threshold
+      );
+    });
   });
 </script>
 {% endblock %}

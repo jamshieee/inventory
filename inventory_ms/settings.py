@@ -77,9 +77,9 @@ WSGI_APPLICATION = 'inventory_ms.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'your_db_name',        # database name you created in pgAdmin
+        'NAME': 'inventory',        # database name you created in pgAdmin
         'USER': 'postgres',            # your pgAdmin username
-        'PASSWORD': 'your_password',   # your pgAdmin password
+        'PASSWORD': 'jsr@78625',   # your pgAdmin password
         'HOST': 'localhost',
         'PORT': '5432',
     }
